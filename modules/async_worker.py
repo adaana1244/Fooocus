@@ -1,6 +1,7 @@
 import threading
 
-from extras.inpaint_mask import generate_mask_from_image, SAMOptions
+# from extras.inpaint_mask import generate_mask_from_image, SAMOptions
+ # Susturuldu
 from modules.patch import PatchSettings, patch_settings, patch_all
 import modules.config
 
