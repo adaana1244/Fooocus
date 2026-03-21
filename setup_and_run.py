@@ -1,38 +1,34 @@
 import os
 import subprocess
-import shutil
+import glob
 
 def setup():
-    print("🛠️ Bozuk dosyalar temizleniyor ve ADetailer/InstantID kuruluyor...")
+    print("🛠️ Kritik Juggernaut onarımı başlatılıyor...")
     
-    # Bozuk Juggernaut varsa sil ki baştan temiz insin
-    corrupted_path = "/content/Fooocus/models/checkpoints/juggernautXL_v9.safetensors.corrupted"
-    if os.path.exists(corrupted_path):
-        os.remove(corrupted_path)
-        print("🗑️ Bozuk model dosyası silindi.")
+    # Bozuk Juggernaut kalıntılarını tamamen temizle
+    for f in glob.glob("/content/Fooocus/models/checkpoints/juggernautXL_v9*"):
+        print(f"🗑️ Siliniyor: {f}")
+        os.remove(f)
 
-    # Kütüphaneleri Kur
+    # Kütüphaneleri tazele
     subprocess.run(["pip", "install", "-r", "requirements.txt", "--quiet"])
-    # ADetailer ve InstantID için gerekli ek paketler
-    subprocess.run(["pip", "install", "deep-translator", "onnxruntime-gpu", "opencv-python", "pyyaml", "--quiet"])
 
-    # Modelleri Kontrol Et ve İndir (WGET -c ile kaldığımız yerden devam eder)
+    # Modeller - Juggernaut için alternatif ve daha stabil bir link kullanıyoruz
     models = {
-        "/content/Fooocus/models/checkpoints/juggernautXL_v9.safetensors": "https://huggingface.co/RunDiffusion/Juggernaut-XL-v9/resolve/main/Juggernaut-XL-v9.safetensors?download=true",
-        "/content/inswapper_128.onnx": "https://huggingface.co/MonsterMMORPG/ai_models_swap/resolve/main/inswapper_128_fp16.onnx?download=true",
-        "/content/Fooocus/models/instantid/diffusion_pytorch_model.safetensors": "https://huggingface.co/InstantX/InstantID/resolve/main/ControlNetModel/diffusion_pytorch_model.safetensors?download=true"
+        "/content/Fooocus/models/checkpoints/juggernautXL_v9.safetensors": "https://huggingface.co/stablediffusionapi/juggernaut-xl-v9/resolve/main/juggernautXL_v9.safetensors",
+        "/content/inswapper_128.onnx": "https://huggingface.co/MonsterMMORPG/ai_models_swap/resolve/main/inswapper_128_fp16.onnx",
+        "/content/Fooocus/models/instantid/diffusion_pytorch_model.safetensors": "https://huggingface.co/InstantX/InstantID/resolve/main/ControlNetModel/diffusion_pytorch_model.safetensors"
     }
     
     os.makedirs("/content/Fooocus/models/instantid", exist_ok=True)
 
     for path, url in models.items():
-        print(f"🔄 Kontrol ediliyor: {path}")
-        # -c parametresi sayesinde internet kopsa bile kaldığı yerden devam eder
-        subprocess.run(["wget", "-c", "-O", path, url, "--quiet"])
+        if not os.path.exists(path):
+            print(f"📥 İndiriliyor (Stabil Link): {path}")
+            # wget yerine aria2c kullanarak daha hızlı ve güvenli indirebiliriz ama wget -c de yeterli
+            subprocess.run(["wget", "-c", "-O", path, url, "--quiet"])
     
-    print("✨ Tüm modeller hazır! Fooocus ADetailer ve InstantID ile başlatılıyor...")
-    # --enable-async-gpu-generate: Üretimi hızlandırır
-    # --controlnet-softness: Yüzün daha doğal oturmasını sağlar
+    print("✨ Model onarıldı! Fooocus başlatılıyor...")
     subprocess.run(["python", "entry_with_update.py", "--share", "--always-high-vram", "--preset", "realistic"])
 
 if __name__ == "__main__":
