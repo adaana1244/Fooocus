@@ -1,32 +1,36 @@
 import os
 import subprocess
+import shutil
 
-def hack_the_ui():
-    print("🛠️ InstantID Butonu Kodun İçine Çivileniyor...")
-    ui_file = "/content/Fooocus/modules/ui_gradio.py"
-    
-    if os.path.exists(ui_file):
-        with open(ui_file, "r") as f:
-            lines = f.readlines()
-        
-        with open(ui_file, "w") as f:
-            for line in lines:
-                # 1. Kontrol mekanizmasını her zaman 'True' yap
-                line = line.replace("self.instant_id_available", "True")
-                # 2. Eğer buton listesi tanımlanıyorsa oraya InstantID'yi zorla ekle
-                f.write(line)
-        print("✅ Kod seviyesinde müdahale tamamlandı.")
+def final_patch():
+    print("🛠️ Kritik UI yaması uygulanıyor...")
+    # Fooocus'un 'mevcut mu?' kontrolü yaptığı dosyaya sızıyoruz
+    ui_config_file = "/content/Fooocus/modules/ui_gradio.py"
+    if os.path.exists(ui_config_file):
+        with open(ui_config_file, "r") as f:
+            content = f.read()
+        # InstantID kontrolünü tamamen devre dışı bırak ve 'True' yap
+        content = content.replace("self.instant_id_available", "True")
+        with open(ui_config_file, "w") as f:
+            f.write(content)
 
 def setup():
-    # Dosyaların yerini son kez doğrula
     base = "/content/Fooocus"
-    os.makedirs(f"{base}/models/clip_vision", exist_ok=True)
     
-    # UI Yamasını Uygula
-    hack_the_ui()
+    # 1. Dosyaları Garantiye Al (Her ihtimale karşı kopyala)
+    clip_src = f"{base}/models/clip_vision/clip_vision_g.safetensors"
+    clip_dst = f"{base}/models/controlnet/clip_vision_g.safetensors" # Alternatif yol
+    
+    if os.path.exists(clip_src) and not os.path.exists(clip_dst):
+        shutil.copy(clip_src, clip_dst)
 
-    print("🚀 SİSTEM ZORLAMALI MODDA BAŞLATILIYOR...")
-    subprocess.run(["python", "entry_with_update.py", "--share", "--always-high-vram"])
+    # 2. Yamayı Uygula
+    final_patch()
+
+    print("🚀 SİSTEM GÜNCELLEMESİZ (NO-UPDATE) MODDA BAŞLATILIYOR...")
+    # 'entry_with_update.py' yerine direkt 'launch.py' veya 'main.py' benzeri 
+    # güncellemeyi tetiklemeyen ana dosyayı çalıştırıyoruz.
+    subprocess.run(["python", "launch.py", "--share", "--always-high-vram"])
 
 if __name__ == "__main__":
     setup()
