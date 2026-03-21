@@ -1,42 +1,40 @@
 import os
 import subprocess
+import json
 
 def setup():
-    print("🏗️ Standart Fooocus Altyapısı Hazırlanıyor...")
+    print("🏗️ Fooocus Altyapısı Doğrulanıyor...")
     
-    # Klasörleri oluştur (Orijinal yapıya uygun)
-    os.makedirs("/content/Fooocus/models/checkpoints", exist_ok=True)
-    os.makedirs("/content/Fooocus/models/controlnet", exist_ok=True)
-    os.makedirs("/content/Fooocus/models/instantid", exist_ok=True)
-
-    # İndirilecek modeller (Orijinal isimleriyle)
-    models = {
-        # Juggernaut XL v9 (Senin istediğin ana model)
-        "/content/Fooocus/models/checkpoints/juggernautXL_v9_photo.safetensors": "https://huggingface.co/RunDiffusion/Juggernaut-XL-v9/resolve/main/Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors?download=true",
-        
-        # InstantID Kontrolcü (Arayüzde butonun çıkması için şart)
-        "/content/Fooocus/models/controlnet/control_instant_id_sdxl.safetensors": "https://huggingface.co/InstantX/InstantID/resolve/main/ControlNetModel/diffusion_pytorch_model.safetensors?download=true",
-        
-        # FaceSwap Motoru (Inswapper)
-        "/content/inswapper_128.onnx": "https://huggingface.co/MonsterMMORPG/ai_models_swap/resolve/main/inswapper_128_fp16.onnx"
+    # 1. Klasör Yollarını Sabitleyelim
+    base_path = "/content/Fooocus"
+    ckpt_path = f"{base_path}/models/checkpoints"
+    ctrl_path = f"{base_path}/models/controlnet"
+    
+    # 2. Config.txt Dosyasını Manuel Oluşturalım (BUTONLARI TETİKLEYEN ASIL KISIM)
+    # Eğer bu dosya doğru yolları göstermezse butonlar çıkmaz.
+    config_data = {
+        "path_checkpoints": ckpt_path,
+        "path_controlnet": ctrl_path,
+        "path_loras": f"{base_path}/models/loras",
+        "path_embeddings": f"{base_path}/models/embeddings",
+        "path_vae_approx": f"{base_path}/models/vae_approx",
+        "path_upscale_models": f"{base_path}/models/upscale_models",
+        "path_inpaint": f"{base_path}/models/inpaint",
+        "path_clip_vision": f"{base_path}/models/clip_vision",
+        "path_fooocus_expansion": f"{base_path}/models/prompt_expansion/fooocus_expansion",
+        "path_outputs": f"{base_path}/outputs",
+        "default_model": "juggernautXL_v9_photo.safetensors",
+        "checkpoint_downloads": {} 
     }
-
-    for path, url in models.items():
-        if not os.path.exists(path):
-            print(f"📥 Model İndiriliyor: {os.path.basename(path)}")
-            subprocess.run(["wget", "-c", "-O", path, url, "--quiet"])
-
-    print("🚀 Fooocus Orijinal Ayarlarıyla Başlatılıyor...")
     
-    # Hiçbir preset zorlaması yapmıyoruz. 
-    # Kullanıcı arayüzden istediği preseti (Realistic, Anime vb.) seçebilir.
-    # Varsayılan olarak Juggernaut zaten klasörde olduğu için seçilebilir olacak.
-    cmd = [
-        "python", "entry_with_update.py", 
-        "--share", 
-        "--always-high-vram"
-    ]
-    subprocess.run(cmd)
+    with open(f"{base_path}/config.txt", "w") as f:
+        json.dump(config_data, f, indent=4)
+    print("✅ Config.txt güncellendi. Yollar kilitlendi.")
+
+    # 3. BAŞLAT
+    print("🚀 Fooocus V9 ve InstantID Modunda Başlatılıyor...")
+    # --share ve --always-high-vram ile en stabil halini açıyoruz
+    subprocess.run(["python", "entry_with_update.py", "--share", "--always-high-vram"])
 
 if __name__ == "__main__":
     setup()
